@@ -45,7 +45,7 @@ npm start
 ```
 
 👉 Live Demo – Chat in real-time, beautifully.
-[🌐 Production Link](https://chatty-1-esdg.onrender.com/)
+[🌐 Production Link](https://chatty-2-xihd.onrender.com/)
 
 
 Happy coding! 💻✨
