@@ -9,7 +9,8 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
-  
+  notifications: {},  // add this for blue dot tracking
+
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
@@ -27,6 +28,12 @@ export const useChatStore = create((set, get) => ({
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
+      
+      // ✅ Clear notification after reading messages
+      set((state) => ({
+        notifications: { ...state.notifications, [userId]: false }
+      }));
+
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch messages.");
     } finally {
@@ -35,7 +42,7 @@ export const useChatStore = create((set, get) => ({
   },
 
   sendMessage: async (messageData) => {
-    const { selectedUser, messages } = get();
+    const { selectedUser } = get();
   
     if (!selectedUser || !selectedUser._id) {
       toast.error("No user selected to send message.");
@@ -47,52 +54,57 @@ export const useChatStore = create((set, get) => ({
       set((state) => ({
         messages: [...state.messages, res.data],
       }));
-  
-      // 👉 Reorder user after sending message
+
+      // 👉 After sending message, no need to set notification for self.
       get().reorderUsers(selectedUser);
-  
+
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to send message.");
       console.error("Send Message Error:", error);
     }
   },
-  
 
-  // If you plan to re-enable these, be sure to uncomment both
   subscribeToMessages: () => {
     const socket = useAuthStore.getState().socket;
-  
+
     socket.on("newMessage", (newMessage) => {
       const { selectedUser, messages, users } = get();
-  
-      // ✅ Only update messages if the new message is for the selected chat
+
       const isCurrentChat =
         selectedUser &&
         (newMessage.senderId === selectedUser._id || newMessage.receiverId === selectedUser._id);
-  
+
       if (isCurrentChat) {
         set({ messages: [...messages, newMessage] });
+      } else {
+        // ✅ If the message is NOT for the currently opened chat, show blue dot
+        set((state) => ({
+          notifications: { ...state.notifications, [newMessage.senderId]: true }
+        }));
       }
-  
-      // ✅ Reorder sender to top, only if the sender exists in the user list
+
       const sender = users.find((u) => u._id === newMessage.senderId);
       if (sender) {
         get().reorderUsers(sender);
       }
     });
   },
-  
-  
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
     socket.off("newMessage");
   },
+
   reorderUsers: (user) => set((state) => {
     const updated = state.users.filter(u => u._id !== user._id);
     return { users: [user, ...updated] };
   }),
-  
 
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
+  // ✅ CORRECT version
+  setSelectedUser: (selectedUser) => {
+    set((state) => ({
+      selectedUser,
+      notifications: { ...state.notifications, [selectedUser._id]: false }, // clear blue dot when user clicks
+    }));
+  },
 }));

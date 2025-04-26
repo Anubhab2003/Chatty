@@ -5,22 +5,17 @@ import SidebarSkeleton from "./skeletons/SidebarSkeletons";
 import { Users } from "lucide-react";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading,isMessaging,reorderUsers} = useChatStore();
-  const { onlineUsers = [], user } = useAuthStore(); // default to [] to prevent undefined errors
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, notifications } = useChatStore();
+  const { onlineUsers = [], user } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
   useEffect(() => {
     getUsers();
   }, []); // run once on mount
-  
-
-  
-
-  
 
   const filteredUsers = showOnlineOnly
     ? (users || []).filter((u) => onlineUsers.includes(u._id) && u._id !== user?._id)
-    : (users || []);
+    : (users || []).filter((u) => u._id !== user?._id); // Don't show yourself
 
   const onlineCount = (onlineUsers || []).filter((id) => id !== user?._id).length;
 
@@ -57,7 +52,7 @@ const Sidebar = () => {
             title={`Chat with ${u.fullName}`}
             className={`
               w-full p-3 flex items-center gap-3
-              hover:bg-base-300 transition-colors
+              hover:bg-base-300 transition-colors relative
               ${selectedUser?._id === u._id ? "bg-base-200 ring-2 ring-primary" : ""}
             `}
           >
@@ -68,8 +63,15 @@ const Sidebar = () => {
                 title={u.fullName}
                 className="size-12 object-cover rounded-full"
               />
+
+              {/* 🟢 Green dot if online */}
               {onlineUsers.includes(u._id) && (
                 <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
+              )}
+
+              {/* 🔵 Blue dot if there are unread notifications */}
+              {notifications[u._id] && (
+                <span className="absolute top-0 right-0 size-3 bg-blue-500 rounded-full ring-2 ring-white" />
               )}
             </div>
 
