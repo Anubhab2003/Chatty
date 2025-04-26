@@ -69,9 +69,14 @@ const Sidebar = () => {
                 <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-zinc-900" />
               )}
 
-              {/* 🔵 Blue dot if there are unread notifications */}
+              {/* 🔵 Blue pulse if there are unread notifications */}
               {notifications[u._id] && (
-                <span className="absolute top-0 right-0 size-3 bg-blue-500 rounded-full ring-2 ring-white" />
+                <div className="absolute top-0 right-0">
+                  {/* Pulse animation */}
+                  <span className="absolute inline-flex h-3 w-3 rounded-full bg-blue-400 opacity-75 animate-ping"></span>
+                  {/* Static blue dot */}
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-blue-500"></span>
+                </div>
               )}
             </div>
 
